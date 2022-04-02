@@ -41,7 +41,7 @@ def profile(request, username):
     paginator = Paginator(posts, POSTS_PER_PAGE)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    count = Post.objects.filter(author__pk=author.id).count
+    count = author.posts.count
     context = {
         'page_obj': page_obj,
         'author': author,
@@ -58,8 +58,8 @@ def profile(request, username):
 def post_detail(request, post_id):
     template = 'posts/post_detail.html'
     post = get_object_or_404(Post, id=post_id)
-    comments = Comment.objects.filter(post__pk=post_id)
-    count = Post.objects.filter(author__posts__pk=post_id).count
+    comments = post.comments.all()
+    count = post.author.posts.count
     form = CommentForm()
     context = {
         'posts': post,
@@ -135,10 +135,7 @@ def profile_follow(request, username):
 @login_required
 def profile_unfollow(request, username):
     author = get_object_or_404(User, username=username)
-    follow = get_object_or_404(
-        Follow, user=request.user,
-        author=author,
-    )
-    if Follow.objects.filter(author__username=username).exists():
+    follow = Follow.objects.filter(user=request.user, author=author)
+    if follow.exists():
         follow.delete()
     return redirect('posts:profile', username=username)
